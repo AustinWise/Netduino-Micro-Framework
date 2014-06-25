@@ -42,7 +42,11 @@ HRESULT Library_corlib_native_System_BitConverter::DoubleToInt64Bits___STATIC__I
 	NATIVE_PROFILE_CLR_CORE();
 	TINYCLR_HEADER();
 
+#if !defined(TINYCLR_EMULATED_FLOATINGPOINT)
 	double input = stack.Arg0().NumericByRefConst().r8;
+#else
+	CLR_INT64 input = stack.Arg0().NumericByRefConst().r8;
+#endif
 	__int64* p = reinterpret_cast<__int64*>(&input);
 	stack.SetResult_I8(*p);
 
@@ -82,11 +86,19 @@ HRESULT Library_corlib_native_System_BitConverter::GetBytes___STATIC__SZARRAY_U1
 	NATIVE_PROFILE_CLR_CORE();
 	TINYCLR_HEADER();
 
+#if !defined(TINYCLR_EMULATED_FLOATINGPOINT)
 	double input = stack.Arg0().NumericByRefConst().r8;
+#else
+	CLR_INT64 input = stack.Arg0().NumericByRefConst().r8;
+#endif
 
 	TINYCLR_CHECK_HRESULT(CLR_RT_HeapBlock_Array::CreateInstance(stack.PushValueAndClear(), 8, g_CLR_RT_WellKnownTypes.m_UInt8));
 	BYTE* p = stack.TopValue().DereferenceArray()->GetFirstElement();
+#if !defined(TINYCLR_EMULATED_FLOATINGPOINT)
 	*reinterpret_cast<double*>(p) = input;
+#else
+	*reinterpret_cast<CLR_INT64*>(p) = input;
+#endif
 
 	TINYCLR_NOCLEANUP();
 }
@@ -96,11 +108,19 @@ HRESULT Library_corlib_native_System_BitConverter::GetBytes___STATIC__SZARRAY_U1
 	NATIVE_PROFILE_CLR_CORE();
 	TINYCLR_HEADER();
 
+#if !defined(TINYCLR_EMULATED_FLOATINGPOINT)
 	float input = stack.Arg0().NumericByRefConst().r4;
+#else
+	CLR_INT32 input = stack.Arg0().NumericByRefConst().r4;
+#endif
 
 	TINYCLR_CHECK_HRESULT(CLR_RT_HeapBlock_Array::CreateInstance(stack.PushValueAndClear(), 4, g_CLR_RT_WellKnownTypes.m_UInt8));
 	BYTE* p = stack.TopValue().DereferenceArray()->GetFirstElement();
+#if !defined(TINYCLR_EMULATED_FLOATINGPOINT)
 	*reinterpret_cast<float*>(p) = input;
+#else
+	*reinterpret_cast<CLR_INT32*>(p) = input;
+#endif
 
 	TINYCLR_NOCLEANUP();
 }
@@ -195,7 +215,11 @@ HRESULT Library_corlib_native_System_BitConverter::Int64BitsToDouble___STATIC__R
 	TINYCLR_HEADER();
 
 	__int64 input = stack.Arg0().NumericByRefConst().s8;
+#if !defined(TINYCLR_EMULATED_FLOATINGPOINT)
 	double* p = reinterpret_cast<double*>(&input);
+#else
+	CLR_INT64* p = reinterpret_cast<CLR_INT64*>(&input);
+#endif
 	stack.SetResult_R8(*p);
 
 	TINYCLR_NOCLEANUP_NOLABEL();
@@ -249,7 +273,11 @@ HRESULT Library_corlib_native_System_BitConverter::ToDouble___STATIC__R8__SZARRA
 	if ((unsigned int)index + 8 > pArray->m_numOfElements) TINYCLR_SET_AND_LEAVE(CLR_E_INVALID_PARAMETER);
 
 	BYTE* p = pArray->GetFirstElement();
+#if !defined(TINYCLR_EMULATED_FLOATINGPOINT)
 	stack.SetResult_R8(*reinterpret_cast<double*>(p + index));
+#else
+	stack.SetResult_R8(*reinterpret_cast<CLR_INT64*>(p + index));
+#endif
 
 	TINYCLR_NOCLEANUP();
 }
@@ -267,7 +295,11 @@ HRESULT Library_corlib_native_System_BitConverter::ToSingle___STATIC__R4__SZARRA
 	if ((unsigned int)index + 4 > pArray->m_numOfElements) TINYCLR_SET_AND_LEAVE(CLR_E_INVALID_PARAMETER);
 
 	BYTE* p = pArray->GetFirstElement();
+#if !defined(TINYCLR_EMULATED_FLOATINGPOINT)
 	stack.SetResult_R4(*reinterpret_cast<float*>(p + index));
+#else
+	stack.SetResult_R4(*reinterpret_cast<CLR_INT32*>(p + index));
+#endif
 
 	TINYCLR_NOCLEANUP();
 }

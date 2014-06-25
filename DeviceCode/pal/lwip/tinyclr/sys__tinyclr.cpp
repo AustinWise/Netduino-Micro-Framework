@@ -8,22 +8,31 @@
 #include "tcpip.h"
 
 //--//
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+//--//
+
+//--//
 //--// System Initailization, call before anything else
 //--//
 
-sys_timeo timeout_list;
+sys_timeouts timeout_list;
 
 //--//
 
 void sys_init(void)
 {
-    memset(&timeout_list, 0, sizeof(timeout_list));
+    
+    timeout_list.next = NULL;
 }
 
 //--// 
 //--// Timeout functions
 //--//
-struct sys_timeo *sys_arch_timeouts(void)
+struct sys_timeouts *sys_arch_timeouts(void)
 {
     return &timeout_list;
 }
@@ -47,20 +56,17 @@ bool IsSemaphoreGreen(volatile UINT32* semaphore)
     return *semaphore != 0;
 }
 
-err_t sys_sem_new(sys_sem_t *sem, u8_t count)
+sys_sem_t sys_sem_new(u8_t count)
 {
-    if(sem == NULL)
-    {
-        return ERR_ARG;
-    }
+    //return dummy_semaphore;
+    volatile UINT32* semaphore = (volatile UINT32*)mem_malloc(sizeof(UINT32));
+    *semaphore = count;
 
-    *sem = count;
-
-    return ERR_OK;
+    return (sys_sem_t)semaphore;
 }
 
 
-void sys_sem_signal(sys_sem_t *sem)
+void sys_sem_signal(sys_sem_t sem)
 {
     volatile UINT32* semaphore = (volatile UINT32*)sem;
     ReleaseSemaphore(semaphore);
@@ -71,7 +77,7 @@ void sys_sem_signal(sys_sem_t *sem)
     }
 }
 
-u32_t sys_arch_sem_wait(sys_sem_t *sem, u32_t timeout)
+u32_t sys_arch_sem_wait(sys_sem_t sem, u32_t timeout)
 {
     volatile UINT32* semaphore = (volatile UINT32*)sem;
 
@@ -93,17 +99,6 @@ u32_t sys_arch_sem_wait(sys_sem_t *sem, u32_t timeout)
                 if(Events_WaitForEvents(SYSTEM_EVENT_FLAG_NETWORK, timeout))
                 {
                     Events_Clear(SYSTEM_EVENT_FLAG_NETWORK);
-
-                    INT64 curTime = ::HAL_Time_CurrentTime();
-
-                    if(elapsed > curTime)
-                    {
-                        timeout -= (elapsed - HAL_Time_CurrentTime()) / 10000;
-                    }
-                }
-                else
-                {
-                    break;
                 }
             }
             else
@@ -134,33 +129,18 @@ u32_t sys_arch_sem_wait(sys_sem_t *sem, u32_t timeout)
             }
         }
     }
-
-    Events_Set(SYSTEM_EVENT_FLAG_NETWORK);
     
     return *semaphore;
 }
 
-void sys_sem_free(sys_sem_t *sem)
+void sys_sem_free(sys_sem_t sem)
 {
-    if(sem != NULL)
-    {
-        *sem = 1;
-    }
-}
+    volatile UINT32* semaphore = (volatile UINT32*)sem;
 
-int sys_sem_valid(sys_sem_t *sem)
-{
-    return (sem != NULL && *sem != 0xEFFFFFFFUL);
+    *semaphore = 0;
+    
+    mem_free(sem);
 }
-
-void sys_sem_set_invalid(sys_sem_t *sem)
-{
-    if(sem != NULL)
-    {
-        *sem = 0xEFFFFFFFUL;
-    }
-}
-
 
 //--//
 //--// Time jiffies (since power up) 
@@ -183,148 +163,110 @@ void sys_signal_sock_event()
 //--// Mailbox functions. 
 //--//
 
-err_t sys_mbox_new(sys_mbox_t *mbox, int size)
+sys_mbox_t sys_mbox_new(int size)
 {    
-    if(mbox == NULL) { ASSERT(FALSE); return ERR_ARG; }
-
     Hal_Queue_UnknownSize<OpaqueQueueNode>* queue = (Hal_Queue_UnknownSize<OpaqueQueueNode>*)mem_malloc(sizeof(Hal_Queue_UnknownSize<OpaqueQueueNode>));
     OpaqueQueueNode* memory = (OpaqueQueueNode*)mem_malloc(sizeof(OpaqueQueueNode) * size);
-
-    if(memory == NULL || queue == NULL)
-    {
-        if(queue != NULL) mem_free(queue);
-            
-        return ERR_MEM;
-    }
-    
     memset(memory, 0, sizeof(OpaqueQueueNode) * size);
     queue->Initialize(memory, size);
 
-    *mbox = (sys_mbox_t)queue;
-    
-    return ERR_OK;
+    return queue;
 }
 
-void sys_mbox_post(sys_mbox_t* mbox, void *msg)
+void sys_mbox_post(sys_mbox_t mbox, void *msg)
 {
-    if(mbox == NULL || *mbox == NULL) { ASSERT(FALSE); return; }
-
-    Hal_Queue_UnknownSize<OpaqueQueueNode>* queue = (Hal_Queue_UnknownSize<OpaqueQueueNode>*)*mbox;
+    Hal_Queue_UnknownSize<OpaqueQueueNode>* queue = (Hal_Queue_UnknownSize<OpaqueQueueNode>*)mbox;
 
     OpaqueQueueNode* node = NULL;
     
     if((node = queue->Push()) != NULL) 
     {
+        //tcpip_msg* m = (tcpip_msg*)mem_malloc(sizeof(tcpip_msg));
+        //api_msg* a = (api_msg*)mem_malloc(sizeof(api_msg));
+        //sys_sem_t* s = (sys_sem_t*)mem_malloc(sizeof(sys_sem_t));
+        //if(!a || !m || !s) return;
+        
+        //memset(m,0,sizeof(tcpip_msg));
+        //memset(a,0,sizeof(api_msg));
+        //memset(s,0,sizeof(sys_sem_t));
+
+        //memcpy(s,((tcpip_msg*)msg)->sem,sizeof(sys_sem_t));
+        //memcpy(a,((tcpip_msg*)msg)->msg.apimsg,sizeof(api_msg));
+        //memcpy(m,msg,sizeof(tcpip_msg));
+        
+
+        //m->msg.apimsg = a;
+        
+        //node->payload = m;
+        
         node->payload = msg;
     }
 
     SOCKETS_RestartTcpIpProcessor(0);
 }
 
-err_t sys_mbox_trypost(sys_mbox_t* mbox, void *msg)
+err_t sys_mbox_trypost(sys_mbox_t mbox, void *msg)
 {
-    if(mbox == NULL || *mbox == NULL) { ASSERT(FALSE); return ERR_ARG; }
 
-    Hal_Queue_UnknownSize<OpaqueQueueNode>* queue = (Hal_Queue_UnknownSize<OpaqueQueueNode>*)*mbox;
+    Hal_Queue_UnknownSize<OpaqueQueueNode>* queue = (Hal_Queue_UnknownSize<OpaqueQueueNode>*)mbox;
 
     OpaqueQueueNode* node = queue->Push();
 
-    if(node != NULL) 
-    {
-        node->payload = msg;
+    if(node != NULL) {
+        
+        //tcpip_msg* m = (tcpip_msg*)mem_malloc(sizeof(tcpip_msg));
+        //memset(m,0,sizeof(tcpip_msg));
+        //memcpy(m,msg,sizeof(tcpip_msg));
+        //node->payload = m;
 
-        SOCKETS_RestartTcpIpProcessor(0);
+        node->payload = msg;
 
         return ERR_OK;    
     }
 
+    SOCKETS_RestartTcpIpProcessor(0);
+
     return ERR_MEM;
 }
 
-u32_t sys_arch_mbox_fetch(sys_mbox_t* mbox, void **msg, u32_t timeout)
+u32_t sys_arch_mbox_fetch(sys_mbox_t mbox, void **msg, u32_t timeout)
 {
-    if(mbox == NULL || *mbox == NULL) { ASSERT(FALSE); return SYS_ARCH_TIMEOUT; }
+    Hal_Queue_UnknownSize<OpaqueQueueNode>* queue = (Hal_Queue_UnknownSize<OpaqueQueueNode>*)mbox;
 
-    Hal_Queue_UnknownSize<OpaqueQueueNode>* queue = (Hal_Queue_UnknownSize<OpaqueQueueNode>*)*mbox;
-    bool didTimeout = false;
+    // TODO
+    // TODO
+    // TODO
+    // implement timeout
+    OpaqueQueueNode* node = queue->Pop();
 
-    if(timeout == 0) 
+    if(node) 
     {
-        timeout = 0xFFFFFFFF;
+        *msg = node->payload;
+        return 0;
+    }
+    else 
+    {
+        // schedule the tcp thread to run when the next timeout occurs
+        // Any incoming data should retrigger the thread prior to timeout
+        SOCKETS_RestartTcpIpProcessor(timeout * 1000);
+
+        *msg = NULL; 
+        return SYS_MBOX_EMPTY;    
     }
 
-    INT64 now = ::HAL_Time_CurrentTime();
-    INT64 elapsed = now + (timeout * 10000);
-    
-    while(elapsed > ::HAL_Time_CurrentTime() || timeout == 1) 
-    {
-        OpaqueQueueNode* node = queue->Pop();
-        
-        if(node) 
-        {
-            *msg = node->payload;
-
-            Events_Set(SYSTEM_EVENT_FLAG_NETWORK);            
-
-            SOCKETS_RestartTcpIpProcessor(0);
-            
-            return 0;
-        }
-        else if(timeout == 1)
-        {
-            break;
-        }
-        
-        if(INTERRUPTS_ENABLED_STATE())
-        {
-            if(Events_WaitForEvents(SYSTEM_EVENT_FLAG_NETWORK, timeout))
-            {
-                Events_Clear(SYSTEM_EVENT_FLAG_NETWORK);
-                
-                INT64 curTime = ::HAL_Time_CurrentTime();
-
-                if(elapsed > curTime)
-                {
-                    timeout -= (elapsed - HAL_Time_CurrentTime()) / 10000;
-                }
-            }
-            else
-            {
-                break;
-            }
-        }
-        else
-        {
-            break;
-        }
-    }
-
-    if(timeout != 1)
-    {
-        Events_Set(SYSTEM_EVENT_FLAG_NETWORK);            
-    }
-    else
-    {
-        didTimeout = true;
-    }
-
-    *msg = NULL; 
-    return didTimeout ? SYS_ARCH_TIMEOUT : SYS_MBOX_EMPTY;    
+    // time needed
+    // do not return SYS_ARCH_TIMEOUT or the system will wait forever
 }
 
-u32_t sys_arch_mbox_tryfetch(sys_mbox_t* mbox, void **msg)
+u32_t sys_arch_mbox_tryfetch(sys_mbox_t mbox, void **msg)
 {
-    if(mbox == NULL || *mbox == NULL) { *msg = NULL; ASSERT(FALSE); return SYS_MBOX_EMPTY; }
-
-    Hal_Queue_UnknownSize<OpaqueQueueNode>* queue = (Hal_Queue_UnknownSize<OpaqueQueueNode>*)*mbox;
+    Hal_Queue_UnknownSize<OpaqueQueueNode>* queue = (Hal_Queue_UnknownSize<OpaqueQueueNode>*)mbox;
 
     OpaqueQueueNode* node = queue->Pop();
 
     if(node)
     {
         *msg = node->payload;
-        
-        SOCKETS_RestartTcpIpProcessor(0);
     }
     else
     {
@@ -335,41 +277,23 @@ u32_t sys_arch_mbox_tryfetch(sys_mbox_t* mbox, void **msg)
     return 0;    
 }
 
-void sys_mbox_free(sys_mbox_t* mbox)
+void sys_mbox_free(sys_mbox_t mbox)
 {
-    if(mbox == NULL || *mbox == NULL) { ASSERT(FALSE); return; }
-
-    Hal_Queue_UnknownSize<OpaqueQueueNode>* queue = (Hal_Queue_UnknownSize<OpaqueQueueNode>*)*mbox;
+    Hal_Queue_UnknownSize<OpaqueQueueNode>* queue = (Hal_Queue_UnknownSize<OpaqueQueueNode>*)mbox;
     
     mem_free(queue->Storage());
     mem_free(queue);
 }
 
-int sys_mbox_valid(sys_mbox_t *mbox)
-{
-    if(mbox == NULL) { ASSERT(FALSE); return 0; }
-
-    return (*mbox != NULL);
-}
-
-void sys_mbox_set_invalid(sys_mbox_t *mbox)
-{
-    if(mbox == NULL) { ASSERT(FALSE); return; }
-
-    *mbox = NULL;
-}
-
-
-
 //--//
 //--// Thread functions. 
 //--// 
 
-sys_thread_t sys_thread_new(const char *name, lwip_thread_fn thread, void *arg, int stacksize, int prio)
+sys_thread_t sys_thread_new(char *name, void (* thread)(void *arg), void *arg, int stacksize, int prio)
 {
     if(strcmp(name,TCPIP_THREAD_NAME) == 0)
     {
-        SOCKETS_CreateTcpIpProcessor((HAL_CALLBACK_FPN)thread, arg);
+        SOCKETS_CreateTcpIpProcessor(thread, arg);
     }
 
     return NULL;
@@ -422,3 +346,7 @@ void sys_arch_unprotect(sys_prot_t pval)
 #endif
 
 //--//
+
+#ifdef __cplusplus
+}
+#endif

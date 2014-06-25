@@ -6,12 +6,6 @@
 
 //--//
 
-#if defined(__RENESAS__)
-volatile int errno;
-#else
-int errno;
-#endif
-
 BOOL Network_Initialize()
 { 
     NATIVE_PROFILE_PAL_COM();

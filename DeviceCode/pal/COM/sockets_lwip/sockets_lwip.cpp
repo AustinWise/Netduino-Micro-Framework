@@ -12,13 +12,13 @@
 
 Sockets_LWIP_Driver g_Sockets_LWIP_Driver;
 
-HAL_COMPLETION Sockets_LWIP_Driver::s_DebuggerTimeoutCompletion;
-
-static HAL_CONTINUATION MulticastResponseContinuation;
-
 #if defined(ADS_LINKER_BUG__NOT_ALL_UNUSED_VARIABLES_ARE_REMOVED)
 #pragma arm section zidata
 #endif
+
+HAL_COMPLETION Sockets_LWIP_Driver::s_DebuggerTimeoutCompletion;
+
+HAL_CONTINUATION MulticastResponseContinuation;
 
 INT32 g_DebuggerPort_SslCtx_Handle = -1;
 
@@ -164,6 +164,7 @@ void Sockets_LWIP_Driver::CloseDebuggerSocket()
         {
             SOCK_close( g_Sockets_LWIP_Driver.m_SocketDebugStream );
         }
+        UnregisterSocket( g_Sockets_LWIP_Driver.m_SocketDebugStream );
 
         g_Sockets_LWIP_Driver.m_usingSSL = FALSE;
         
@@ -171,7 +172,10 @@ void Sockets_LWIP_Driver::CloseDebuggerSocket()
 
         g_Sockets_LWIP_Driver.m_stateDebugSocket = DbgSock_Listening;
 
-        s_DebuggerTimeoutCompletion.Abort();
+        if(s_DebuggerTimeoutCompletion.IsLinked())
+        {
+            s_DebuggerTimeoutCompletion.Abort();
+        }
     }
 }
 
@@ -184,7 +188,19 @@ BOOL  SOCKETS_Initialize( int ComPortNum )
 {
     NATIVE_PROFILE_PAL_COM();
 
-    return Sockets_LWIP_Driver::InitializeDbgListener( ComPortNum );
+    BOOL ret = FALSE;
+
+    for(int i=0; i<50; i++)
+    {
+        ret = Sockets_LWIP_Driver::InitializeDbgListener( ComPortNum );
+
+        if(ret) break;
+
+        Events_WaitForEvents(SLEEP_LEVEL__SLEEP, SYSTEM_EVENT_FLAG_SOCKET, 100);
+        Watchdog_ResetCounter();
+    }
+
+    return ret;
 }
 BOOL  SOCKETS_Uninitialize( int ComPortNum )
 {
@@ -207,7 +223,6 @@ INT32 SOCKETS_Read( INT32 ComPortNum, char* Data, size_t size )
 BOOL SOCKETS_Flush( INT32 ComPortNum )
 {
     NATIVE_PROFILE_PAL_COM();
-    //Events_WaitForEvents(0, 2);
     return TRUE;
 }
 
@@ -361,45 +376,33 @@ void Sockets_LWIP_Driver::CloseConnections(BOOL fCloseDbg)
     NATIVE_PROFILE_PAL_COM();
 
     INT32 cnt = g_Sockets_LWIP_Driver.m_cntSockets;
-    INT32 idx = 0;
-
-    // round one - close all SSL sockets
-    for( INT32 i=cnt-1; i>=0; i-- )
-    {
-        struct SocketRegisterMap& entry = g_Sockets_LWIP_Driver.m_socketHandles[i];
-        
-        if(entry.m_socket  != SOCK_SOCKET_ERROR && 
-           entry.m_sslData != NULL)
-        {
-            SSL_CloseSocket(entry.m_socket);
-        }
-    }
-
-    // round two - close all non-SSL sockets
-    cnt = g_Sockets_LWIP_Driver.m_cntSockets;
 
     for( INT32 i=0; i<cnt; i++ )
     {
-        struct SocketRegisterMap& entry = g_Sockets_LWIP_Driver.m_socketHandles[i];
+        SOCK_SOCKET sock = g_Sockets_LWIP_Driver.m_socketHandles[i].m_socket;
         
-        if(entry.m_socket != SOCK_SOCKET_ERROR)
+        if((sock != SOCK_SOCKET_ERROR) && (fCloseDbg || !ISSET_SOCKET_FLAG(g_Sockets_LWIP_Driver.m_socketHandles[i], SocketRegisterMap::c_DebugSocket)))
         {
-            if(fCloseDbg || !ISSET_SOCKET_FLAG(entry, SocketRegisterMap::c_DebugSocket))
+            if(g_Sockets_LWIP_Driver.m_socketHandles[i].m_sslData != NULL)
+            {
+                SSL_CloseSocket(sock);
+            }
+            else
             {
                 // use the HAL method so we don't unregister the socket since we handle that here
-                HAL_SOCK_close(entry.m_socket);
-                
-                g_Sockets_LWIP_Driver.m_socketHandles[i].m_socket  = SOCK_SOCKET_ERROR;
-                g_Sockets_LWIP_Driver.m_socketHandles[i].m_flags   = 0;
-                g_Sockets_LWIP_Driver.m_socketHandles[i].m_sslData = NULL;
-                g_Sockets_LWIP_Driver.m_cntSockets--;
+                HAL_SOCK_close(sock);
             }
-            else if(i > 0)
-            {
-                memcpy( &g_Sockets_LWIP_Driver.m_socketHandles[i], 
-                        &g_Sockets_LWIP_Driver.m_socketHandles[idx++], 
-                        sizeof(g_Sockets_LWIP_Driver.m_socketHandles[i]) );
-            }
+            
+            g_Sockets_LWIP_Driver.m_socketHandles[i].m_socket  = SOCK_SOCKET_ERROR;
+            g_Sockets_LWIP_Driver.m_socketHandles[i].m_flags   = 0;
+            g_Sockets_LWIP_Driver.m_socketHandles[i].m_sslData = NULL;
+            g_Sockets_LWIP_Driver.m_cntSockets--;
+        }
+        else if(i > 0)
+        {
+            memcpy( &g_Sockets_LWIP_Driver.m_socketHandles[i], 
+                    &g_Sockets_LWIP_Driver.m_socketHandles[0], 
+                    sizeof(g_Sockets_LWIP_Driver.m_socketHandles[i]) );
         }
     }
 }
@@ -553,7 +556,6 @@ void Sockets_LWIP_Driver::MulticastDiscoveryRespond(void* arg)
             INT32 opt = 64;
             SOCK_SOCKET sock;
             INT32 nonblocking = 1;
-            SOCKET_CHECK_ENTER();
 
             // Load is required here because the g_NetworkConfig contains only the static ip address (not DHCP)
             HAL_SOCK_CONFIGURATION_LoadAdapterConfiguration(0, &current);
@@ -657,13 +659,17 @@ BOOL Sockets_LWIP_Driver::UninitializeDbgListener( int ComPortNum )
 
     g_Sockets_LWIP_Driver.m_stateDebugSocket = DbgSock_Uninitialized;
 
-    CloseDebuggerSocket();
-
-    if(g_Sockets_LWIP_Driver.m_SocketDebugListener != SOCK_SOCKET_ERROR)
     {
-        SOCK_close( g_Sockets_LWIP_Driver.m_SocketDebugListener );
-        
-        g_Sockets_LWIP_Driver.m_SocketDebugListener = SOCK_SOCKET_ERROR;
+        BOOL fWasEnabled = SmartPtr_IRQ::ForceEnabled(NULL);
+
+        CloseDebuggerSocket();
+
+        if(g_Sockets_LWIP_Driver.m_SocketDebugListener != SOCK_SOCKET_ERROR)
+        {
+            SOCK_close( g_Sockets_LWIP_Driver.m_SocketDebugListener );
+            g_Sockets_LWIP_Driver.m_SocketDebugListener = SOCK_SOCKET_ERROR;
+        }
+        if(!fWasEnabled) SmartPtr_IRQ::ForceDisabled(NULL);
     }
 
     return TRUE;
@@ -776,6 +782,8 @@ BOOL Sockets_LWIP_Driver::InitializeMulticastDiscovery()
 
 //-//--//--//
 
+extern struct netif g_Loopback_NetIF;
+
 void Sockets_LWIP_Driver::TCP_IP_Thread_ContinuationRoutine(void* arg)
 {
     // call back lwIP
@@ -799,7 +807,7 @@ void Sockets_LWIP_Driver::TCP_IP_Thread_ContinuationRoutine(void* arg)
                 MulticastResponseContinuation.Enqueue();
             }
         }
-    }    
+    }
 }
 
 void Sockets_LWIP_Driver::CreateTcpIpProcessor(HAL_CALLBACK_FPN callback, void* arg)
@@ -813,20 +821,17 @@ void Sockets_LWIP_Driver::CreateTcpIpProcessor(HAL_CALLBACK_FPN callback, void* 
 
 void Sockets_LWIP_Driver::RestartTcpIpProcessor(UINT32 timeFromNow_us)
 {
-    if(g_Sockets_LWIP_Driver.m_TCP_IP_state_machine_callback == NULL) return;
-
     GLOBAL_LOCK(irq);
 
     BOOL isLinked = g_Sockets_LWIP_Driver.m_TCP_IP_state_machine.IsLinked();
 
     if(timeFromNow_us == 0)
     {
-        g_Sockets_LWIP_Driver.m_TCP_IP_state_machine.Abort();
+        if(isLinked) 
+        {
+            g_Sockets_LWIP_Driver.m_TCP_IP_state_machine.Abort();
+        }
         g_Sockets_LWIP_Driver.m_TCP_IP_state_machine.Enqueue();
-    }
-    else if(timeFromNow_us == 0xFFFFFFFF)
-    {
-        g_Sockets_LWIP_Driver.m_TCP_IP_state_machine.Abort();
     }
     else if(!isLinked)
     {
@@ -843,12 +848,7 @@ BOOL Sockets_LWIP_Driver::Initialize()
 
     if(!s_initialized)
     {
-        g_Sockets_LWIP_Driver.m_TCP_IP_state_machine_callback = NULL;
         g_Sockets_LWIP_Driver.m_fShuttingDown = FALSE;
-
-        memset(&MulticastResponseContinuation               , 0, sizeof(MulticastResponseContinuation               ));
-        memset(&g_Sockets_LWIP_Driver.m_TCP_IP_state_machine, 0, sizeof(g_Sockets_LWIP_Driver.m_TCP_IP_state_machine));
-        memset(&s_DebuggerTimeoutCompletion                 , 0, sizeof(s_DebuggerTimeoutCompletion                 ));
 
 
         g_Sockets_LWIP_Driver.m_multicastSocket     = SOCK_SOCKET_ERROR;
@@ -890,10 +890,13 @@ BOOL Sockets_LWIP_Driver::Uninitialize( )
    
     if(s_initialized)
     {
-        MulticastResponseContinuation.Abort();
+        if(MulticastResponseContinuation.IsLinked())
+        {
+            MulticastResponseContinuation.Abort();
+        }
+
+        g_Sockets_LWIP_Driver.m_TCP_IP_timer.Abort();
         g_Sockets_LWIP_Driver.m_TCP_IP_state_machine.Abort();
-        s_DebuggerTimeoutCompletion.Abort();
-        g_Sockets_LWIP_Driver.m_TCP_IP_state_machine_callback = NULL;    
         
         g_Sockets_LWIP_Driver.m_stateDebugSocket = DbgSock_Uninitialized;
 

@@ -44,9 +44,7 @@
 #endif
 //MS:end
 
-#ifndef OPENSSL_SMALL_FOOTPRINT
 #define OPENSSL_SMALL_FOOTPRINT 1
-#endif 
 
 #ifndef OPENSSL_DOING_MAKEDEPEND
 

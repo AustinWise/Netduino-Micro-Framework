@@ -99,6 +99,10 @@ void CPU_Reset()
 
 BOOL CPU_IsSoftRebootSupported ()
 {
+#if defined(PLATFORM_ARM_SAM7X_ANY)
+    return FALSE;
+#else
     return TRUE;
+#endif
 }
 
