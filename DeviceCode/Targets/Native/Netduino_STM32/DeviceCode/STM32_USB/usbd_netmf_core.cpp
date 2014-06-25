@@ -970,7 +970,7 @@ USB_OTG_STS STM32_USB_EPClearStall(USB_OTG_CORE_HANDLE *pdev , USB_OTG_EP *ep)
 {
   USB_OTG_STS status = USB_OTG_OK;
   USB_OTG_DEPCTL_TypeDef  depctl;
-  __IO uint32_t *depctl_addr;
+  __IO UINT32 *depctl_addr;
   
   depctl.d32 = 0;
   
@@ -1301,7 +1301,7 @@ void STM32_USB_GetString(UINT8 *desc, UINT8 *unicode, UINT16 *len)
       unicode[idx++] = 0;
     unicode[idx++] =  USB_STRING_DESCRIPTOR_TYPE;
     
-    while (*desc != NULL) 
+    while (*desc != 0)
     {
       unicode[idx++] = *desc++;
       unicode[idx++] =  0x00;

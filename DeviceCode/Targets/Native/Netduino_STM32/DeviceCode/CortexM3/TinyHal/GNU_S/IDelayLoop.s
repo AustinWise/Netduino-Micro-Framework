@@ -12,12 +12,13 @@
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 .syntax unified
+.thumb
 
     .global  IDelayLoop
 
     @AREA ||i.IDelayLoop||, CODE, READONLY @ void IDelayLoop(UINT32 count)
     .section i.IDelayLoop, "ax", %progbits
-
+    .thumb_func
 IDelayLoop:
     subs    r0, r0, #4          @@ 1 cycle
     bgt     IDelayLoop          @@ 3 cycles taken, 1 cycle not taken.

@@ -85,6 +85,10 @@
 #define PLATFORM_ARM
 #define ADS_PACKED
 #define GNU_PACKED  __attribute__((packed))
+
+#ifdef __section
+#undef __section	// GCC 4.8 define is without stringification (#)
+#endif
 #define __section(x) __attribute__((section(#x)))
 #define __irq __attribute__((interrupt))
 #define __forceinline __attribute__((always_inline))
@@ -474,14 +478,16 @@ typedef void (*LOGGING_CALLBACK)(LPCSTR text);
 
 void hal_fprintf_SetLoggingCallback( LOGGING_CALLBACK fpn );
 
-extern "C"
+extern "C"
+
 {
 void lcd_printf( const char* format, ... );
 }
 
 #else
 
-extern "C"
+extern "C"
+
 {
 __inline void lcd_printf( const char* format, ... ) {}
 }

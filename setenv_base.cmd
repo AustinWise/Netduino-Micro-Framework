@@ -1,4 +1,19 @@
 @echo off
+@rem
+@rem Copyright 2014 The NETMF Fork project contributors
+@rem
+@rem Licensed under the Apache License, Version 2.0 (the "License");
+@rem you may not use this file except in compliance with the License.
+@rem You may obtain a copy of the License at
+@rem
+@rem     http://www.apache.org/licenses/LICENSE-2.0
+@rem
+@rem Unless required by applicable law or agreed to in writing, software
+@rem distributed under the License is distributed on an "AS IS" BASIS,
+@rem WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+@rem See the License for the specific language governing permissions and
+@rem limitations under the License.
+@rem
 
 set PORT_BUILD=
 set NO_ADS_WRAPPER=
@@ -251,6 +266,14 @@ SET COMPILER_TOOL_VERSION_NUM=%COMPILER_TOOL_VERSION_NUM:~0,3%
 SET COMPILER_TOOL_VERSION=%COMPILER_TOOL%%COMPILER_TOOL_VERSION_NUM:~0,3%
 set DOTNETMF_COMPILER=%COMPILER_TOOL_VERSION%
 
+rem Convert version to number (X.YY -> xxyy) for comparison in targets file
+for /f "tokens=1 delims=." %%i in ('echo %COMPILER_TOOL_VERSION_NUM%') do set /a COMPILER_TOOL_VERSION_MAJOR=%%i
+for /f "tokens=2 delims=." %%i in ('echo %COMPILER_TOOL_VERSION_NUM%') do set /a COMPILER_TOOL_VERSION_MINOR=%%i
+set /a COMPILER_TOOL_VER=%COMPILER_TOOL_VERSION_MAJOR%*100+%COMPILER_TOOL_VERSION_MINOR%
+set COMPILER_TOOL_VERSION_MAJOR=
+set COMPILER_TOOL_VERSION_MINOR=
+
+
 IF /I "%COMPILER_TOOL%"=="GCC" (
 IF EXIST "%ARG3%\lib\gcc\arm-none-eabi\%GNU_VERSION%" (
 set ARMINC=%ARG3%\lib\gcc\arm-none-eabi\%GNU_VERSION%\include
@@ -303,26 +326,12 @@ IF NOT EXIST "%ARG3%" GOTO :BAD_MDK_ARG
 SET MDK_TOOL_PATH=%ARG3%
 SET PATH=%MDK_TOOL_PATH%;%PATH%
 
-SET MDK_EXT=%COMPILER_TOOL_VERSION_NUM:~0,1%
-SET MDK_SUB_EXT=%COMPILER_TOOL_VERSION_NUM:~2,2%
-
-IF "%MDK_EXT%"=="3" SET MDK_EXT=31
-IF "%MDK_EXT%"=="4" (
-  IF "%MDK_SUB_EXT%"=="54" (
-    SET MDK_EXT=40 
-  ) ELSE (
-    SET MDK_EXT=31 
-  )
-)
-
-IF "%MDK_EXT%"=="" (
-  @echo Unsupported MDK version %COMPILER_TOOL_VERSION_NUM%
-  GOTO :BAD_MDK_ARG
-)
-
-SET RVCT%MDK_EXT%BIN=%MDK_TOOL_PATH%\ARM\BIN%MDK_EXT%
-SET RVCT31LIB=%MDK_TOOL_PATH%\RV31\LIB
-SET RVCT31INC=%MDK_TOOL_PATH%\RV31\INC
+rem Convert version to number (X.YY -> xxyy) for comparison in targets file
+for /f "tokens=1 delims=." %%i in ('echo %COMPILER_TOOL_VERSION_NUM:a=%') do set /a COMPILER_TOOL_VERSION_MAJOR=%%i
+for /f "tokens=2 delims=." %%i in ('echo %COMPILER_TOOL_VERSION_NUM:a=%') do set /a COMPILER_TOOL_VERSION_MINOR=%%i
+set /a COMPILER_TOOL_VER=%COMPILER_TOOL_VERSION_MAJOR%*100+%COMPILER_TOOL_VERSION_MINOR%
+set COMPILER_TOOL_VERSION_MAJOR=
+set COMPILER_TOOL_VERSION_MINOR=
 
 GOTO :EOF
 

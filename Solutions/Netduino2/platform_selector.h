@@ -21,7 +21,9 @@
 #define HAL_SYSTEM_NAME                     "Netduino2"
 
 #define STM32F2XX
+#ifndef PLATFORM_ARM_STM32
 #define PLATFORM_ARM_STM32 /* this is an old designation */
+#endif
 #define PLATFORM_ARM_STM32F2_ANY /* this is our new designation for STM32F2 */
 //#define PLATFORM_ARM_STM32F205RF /* this is our particular MCU */
 

@@ -12,6 +12,7 @@
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 .syntax unified
+.thumb
 
 @*****************************************************************************
 
@@ -24,6 +25,7 @@
 @*****************************************************************************
 
     .section    i.FAULT_SubHandler, "ax", %progbits
+    .thumb_func
 FAULT_SubHandler:
 @ on entry, we have an exception frame on the stack:
 @ SP+00: R0
@@ -50,6 +52,7 @@ FAULT_SubHandler:
 @*****************************************************************************
 
     .section    i.HARD_Breakpoint, "ax", %progbits
+    .thumb_func
 HARD_Breakpoint:
 @ on entry, were are being called from C/C++ in Thread mode
     add      sp,sp,#-4            @ space for PSR

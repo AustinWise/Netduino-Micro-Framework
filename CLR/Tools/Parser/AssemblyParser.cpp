@@ -1,7 +1,19 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Copyright 2014 The NETMF Fork project contributors
 // Copyright (c) Microsoft Corporation.  All rights reserved.
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 #include "stdafx.h"
 
 
@@ -1295,14 +1307,14 @@ MetaData::Parser::Parser( Collection* holder )
     m_fNoByteCode          = false; // bool                             m_fNoByteCode;
     m_fNoAttributes        = false; // bool                             m_fNoAttributes;
                                     // CLR_RT_StringSet                 m_setFilter_ExcludeClassByName;
+                                    // ISymUnmanagedReaderPtr           m_pSymReader;
                                     //
                                     // //--//
                                     //
-                                    // CComPtr<IMetaDataDispenserEx>    m_pDisp;
-                                    // CComPtr<IMetaDataImport>         m_pImport;
-                                    // CComPtr<IMetaDataImport>         m_pImport2;
-                                    // CComPtr<IMetaDataAssemblyImport> m_pAssemblyImport;
-                                    // CComPtr<ISymUnmanagedReader>     m_pSymReader;
+                                    // IMetaDataDispenserExPtr          m_pDisp;
+                                    // IMetaDataImportPtr               m_pImport;
+                                    // IMetaDataImport2Ptr              m_pImport2;
+                                    // IMetaDataAssemblyImportPtr       m_pAssemblyImport;
                                     // PELoader                         m_pe;
     m_output  = stdout;             // FILE*                            m_output;
     m_toclose = NULL;               // FILE*                            m_toclose;
@@ -2299,6 +2311,9 @@ HRESULT MetaData::Parser::ParseByteCode( MethodDef& db )
 }
 
 //--//
+_COM_SMRT_PTR(ICLRMetaHost);
+_COM_SMRT_PTR(ICLRRuntimeInfo);
+
 
 HRESULT MetaData::Parser::Analyze( LPCWSTR szFileName )
 {
@@ -2317,7 +2332,12 @@ HRESULT MetaData::Parser::Analyze( LPCWSTR szFileName )
 
     m_pe.OpenAndDecode( szFileName );
 
-    TINYCLR_CHECK_HRESULT(::CoCreateInstance( CLSID_CorMetaDataDispenser, NULL, CLSCTX_INPROC_SERVER, IID_IMetaDataDispenserEx, (void **)&m_pDisp ));
+    ICLRMetaHostPtr spMetaHost;
+    ICLRRuntimeInfoPtr spRuntimeInfo;
+    TINYCLR_CHECK_HRESULT(CLRCreateInstance(CLSID_CLRMetaHost, IID_PPV_ARGS(&spMetaHost)));
+    TINYCLR_CHECK_HRESULT(spMetaHost->GetRuntime(L"v4.0.30319", IID_PPV_ARGS(&spRuntimeInfo)));
+
+    TINYCLR_CHECK_HRESULT(spRuntimeInfo->GetInterface(CLSID_CorMetaDataDispenser, IID_IMetaDataDispenserEx, (LPVOID*)&m_pDisp));
 
     TINYCLR_CHECK_HRESULT(m_pDisp->OpenScope( szFileName, ofRead, IID_IMetaDataImport, (IUnknown**)&m_pImport ));
     

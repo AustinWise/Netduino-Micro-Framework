@@ -12,6 +12,7 @@
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 .syntax unified
+.thumb
 
     .global  EntryPoint
 
@@ -72,6 +73,7 @@ CustomHeapEnd:
 
     .section i.EntryPoint, "ax", %progbits
 
+.thumb_func
 EntryPoint:
 
 @ The first word has several functions:
@@ -81,7 +83,7 @@ EntryPoint:
 @ - it is the first entry of the initial exception handler table
 @ The actual word used is 0x2000E00C
 
-    b         Start         @ 0xE00C
+    b.n         Start         @ 0xE00C
     .hword    0x2000        @ Booter signature is 0x2000E00C
     .word     Start         @ Reset
     .word     Fault_Handler @ NMI
@@ -90,6 +92,7 @@ EntryPoint:
     .word     Fault_Handler @ Bus Fault
     .word     Fault_Handler @ Usage Fault
 
+.thumb_func
 Start:
     @ allow per processor pre-stack initialization
 
@@ -113,6 +116,7 @@ PreStackInit_Exit_Pointer:
 StackTop_Ptr:
     .word     StackTop
 
+.thumb_func
 Fault_Handler:
     b       Fault_Handler
 

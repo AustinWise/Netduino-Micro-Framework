@@ -1468,7 +1468,7 @@ void Sockets_Driver::UnregisterSocket( INT32 index )
 
     g_Sockets_Driver.m_socketHandles[g_Sockets_Driver.m_cntSockets].m_socket = SOCK_SOCKET_ERROR;
     g_Sockets_Driver.m_socketHandles[g_Sockets_Driver.m_cntSockets].m_flags  = 0;
-    g_Sockets_Driver.m_socketHandles[g_Sockets_Driver.m_cntSockets].m_socket = NULL;
+    g_Sockets_Driver.m_socketHandles[g_Sockets_Driver.m_cntSockets].m_socket = 0;
 }
 
 #if defined(ADS_LINKER_BUG__NOT_ALL_UNUSED_VARIABLES_ARE_REMOVED)

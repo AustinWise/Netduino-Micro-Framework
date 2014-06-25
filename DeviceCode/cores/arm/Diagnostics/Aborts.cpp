@@ -1,7 +1,19 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Copyright 2014 The NETMF Fork project contributors
 // Copyright (c) Microsoft Corporation.  All rights reserved.
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 #include <tinyhal.h>
 
 #if defined(PLATFORM_ARM_MC9328)
@@ -9,7 +21,13 @@
 #endif
 //--//
 
-#if !defined(BUILD_RTM)
+#if !defined(ABORTS_REDUCESIZE)
+  #if defined(BUILD_RTM)
+    #define ABORTS_REDUCESIZE
+  #endif
+#endif
+
+#if !defined(ABORTS_REDUCESIZE)
 
 void monitor_debug_printf( const char* format, ... )
 {
@@ -414,7 +432,7 @@ StartMonitorMode:
     }
 }
 
-#endif  // !defined(BUILD_RTM)
+#endif  // !defined(ABORTS_REDUCESIZE)
 
 extern "C"
 {
@@ -423,7 +441,7 @@ void UNDEF_Handler( UINT32* registers, UINT32 sp, UINT32 lr )
 {    
     ASSERT_IRQ_MUST_BE_OFF();
     
-#if !defined(BUILD_RTM)
+#if !defined(ABORTS_REDUCESIZE)
     Verify_RAMConstants((void *) FALSE);
 
     ABORT_HandlerDisplay(registers, sp, lr, 4, "Undef Instr", TRUE);
@@ -431,7 +449,7 @@ void UNDEF_Handler( UINT32* registers, UINT32 sp, UINT32 lr )
     CPU_Halt();
 #else
     CPU_Reset();
-#endif  // !defined(BUILD_RTM)
+#endif  // !defined(ABORTS_REDUCESIZE)
 }
 
 
@@ -439,7 +457,7 @@ void ABORTP_Handler( UINT32* registers, UINT32 sp, UINT32 lr )
 {
     ASSERT_IRQ_MUST_BE_OFF();
 
-#if !defined(BUILD_RTM)
+#if !defined(ABORTS_REDUCESIZE)
     Verify_RAMConstants((void *) FALSE);
 
     ABORT_HandlerDisplay(registers, sp, lr, 4, "ABORT Prefetch", TRUE);
@@ -447,7 +465,7 @@ void ABORTP_Handler( UINT32* registers, UINT32 sp, UINT32 lr )
     CPU_Halt();
 #else
     CPU_Reset();
-#endif  // !defined(BUILD_RTM)
+#endif  // !defined(ABORTS_REDUCESIZE)
 }
 
 
@@ -455,7 +473,7 @@ void ABORTD_Handler( UINT32* registers, UINT32 sp, UINT32 lr )
 {
     ASSERT_IRQ_MUST_BE_OFF();
 
-#if !defined(BUILD_RTM)
+#if !defined(ABORTS_REDUCESIZE)
     Verify_RAMConstants((void *) FALSE);
 
     ABORT_HandlerDisplay(registers, sp, lr, 8, "ABORT Data", TRUE);
@@ -463,7 +481,7 @@ void ABORTD_Handler( UINT32* registers, UINT32 sp, UINT32 lr )
     CPU_Halt();
 #else
     CPU_Reset();
-#endif  // !defined(BUILD_RTM)
+#endif  // !defined(ABORTS_REDUCESIZE)
 }
 
 
@@ -474,7 +492,7 @@ HARD_Breakpoint_Handler(
     UINT32 lr
     )
 {    
-#if !defined(BUILD_RTM)
+#if !defined(ABORTS_REDUCESIZE)
 
     if(1 == ++ABORT_recursion_counter)
     {
@@ -491,10 +509,10 @@ HARD_Breakpoint_Handler(
 
     CPU_Reset();
 
-#endif  // !defined(BUILD_RTM)
+#endif  // !defined(ABORTS_REDUCESIZE)
 }
 
-#if !defined(BUILD_RTM)
+#if !defined(ABORTS_REDUCESIZE)
 
 void NULL_Pointer_Write()
 {
@@ -515,23 +533,23 @@ void NULL_Pointer_Write()
     CPU_Halt();
 }
 
-#endif  // !defined(BUILD_RTM)
+#endif  // !defined(ABORTS_REDUCESIZE)
 
 
 void StackOverflow( UINT32 sp )
 {
     ASSERT_IRQ_MUST_BE_OFF();
 
-#if !defined(BUILD_RTM) && !defined(PLATFORM_ARM_OS_PORT)
+#if !defined(ABORTS_REDUCESIZE) && !defined(PLATFORM_ARM_OS_PORT)
     lcd_printf("\fSTACK OVERFLOW\r\nsp=0x%08x\r\nStackBottom:\r\n0x%08x", sp, (UINT32)&StackBottom);
 
     CPU_Halt();
 #else
     CPU_Reset();
-#endif  // !defined(BUILD_RTM)
+#endif  // !defined(ABORTS_REDUCESIZE)
 }
 
-}
+} // extern "C"
 
 void HAL_Assert( LPCSTR Func, int Line, LPCSTR File )
 {

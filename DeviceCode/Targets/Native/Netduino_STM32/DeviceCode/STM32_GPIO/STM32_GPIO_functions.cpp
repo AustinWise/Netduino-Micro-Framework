@@ -14,7 +14,7 @@
 
 #include <tinyhal.h>
 #include <cores\arm\include\cpu.h>
-#include "STM32_GPIO_functions.h";
+#include "STM32_GPIO_functions.h"
 #include "..\STM32_RCC\STM32_RCC_functions.h"
 #if defined(PLATFORM_ARM_STM32F4_ANY)
 #include "..\stm32f4xx.h"

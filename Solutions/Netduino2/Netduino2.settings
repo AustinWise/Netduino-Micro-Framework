@@ -13,9 +13,11 @@
     <OEMSystemInfoString>Netduino 2 (v4.3.1.0) by Secret Labs LLC</OEMSystemInfoString>
     <NO_BOOTLOADER_COMPRESSION>true</NO_BOOTLOADER_COMPRESSION>
     <TCP_IP_STACK>LWIP</TCP_IP_STACK>
+    <DEVICE_TYPE>cortex-m3</DEVICE_TYPE>
   </PropertyGroup>
   <ItemGroup>
     <IncludePaths Include="Solutions\Netduino2" />
+    <TinyCLR_Defines Include="ABORTS_REDUCESIZE=1" />
     <TinyCLR_Defines Include="PLATFORM_DEPENDENT_HEAP_SIZE_THRESHOLD=10240" />
     <TinyCLR_Defines Include="PLATFORM_DEPENDENT_HEAP_SIZE_THRESHOLD_UPPER=131072" />
     <TinyCLR_Defines Include="PLATFORM_NO_CLR_TRACE=1" />

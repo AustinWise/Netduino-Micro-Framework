@@ -22,8 +22,12 @@ inline int __signbitd(double x)
 
 #elif __GNUC__
 
+#ifndef isgreater
 #define isgreater(param0,param1) (param0 > param1)
+#endif
+#ifndef isless
 #define isless(param0,param1)    (param0 < param1)
+#endif
 
 #elif defined(arm) || defined(__arm)
 

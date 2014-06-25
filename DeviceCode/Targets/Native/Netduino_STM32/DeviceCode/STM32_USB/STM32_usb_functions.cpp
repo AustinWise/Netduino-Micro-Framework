@@ -411,6 +411,10 @@ void STM32_USB_Driver_EP_In_Int(UINT32 , USB_CONTROLLER_STATE* State, int endpoi
   }
 }
 
+#if defined(__GNUC__) && !defined(__packed)
+#define __packed    __attribute__ ((__packed__))
+#endif
+
 USB_OTG_STS STM32_USB_WritePacket(USB_OTG_CORE_HANDLE *pdev, UINT8 *src, UINT8 ch_ep_num, UINT16 len)
 {
   UINT32 count32b= 0 , i= 0;

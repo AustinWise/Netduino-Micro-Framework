@@ -1,5 +1,20 @@
-<Project  xmlns="http://schemas.microsoft.com/developer/msbuild/2003"  ToolsVersion="4.0">
- 
+<!--
+  Copyright 2014 The NETMF Fork project contributors
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+
   <PropertyGroup>
     <BuildToolName>MDK</BuildToolName>
     <BuildToolGuid>{CD24C1A5-2641-4460-AC5A-093B1C6D3D8B}</BuildToolGuid>
@@ -8,44 +23,48 @@
     <ISAs>arm;thumb</ISAs>
   </PropertyGroup>
 
- <PropertyGroup>
+  <PropertyGroup>
     <TARGETCURRENT>$(SPO_BUILD)\$(INSTRUCTION_SET)\$(TARGETLOCATION)\$(OLD_FLAVOR)\$(TARGETPLATFORM)\bin</TARGETCURRENT>
-    <!-- MDK ARM Tools -->
-    <CC      Condition="'$(COMPILER_TOOL_VERSION)'=='MDK3.1'">"$(MDK_TOOL_PATH)\bin31\armcc.exe"</CC>
-    <CPP     Condition="'$(COMPILER_TOOL_VERSION)'=='MDK3.1'">"$(MDK_TOOL_PATH)\bin31\armcc.exe"</CPP>
-    <AS      Condition="'$(COMPILER_TOOL_VERSION)'=='MDK3.1'">"$(MDK_TOOL_PATH)\bin31\armasm.exe"</AS>
-    <LINK    Condition="'$(COMPILER_TOOL_VERSION)'=='MDK3.1'">"$(MDK_TOOL_PATH)\bin31\armlink.exe"</LINK>
-    <AR      Condition="'$(COMPILER_TOOL_VERSION)'=='MDK3.1'">"$(MDK_TOOL_PATH)\bin31\armar.exe"</AR>
-    <FROMELF Condition="'$(COMPILER_TOOL_VERSION)'=='MDK3.1'">"$(MDK_TOOL_PATH)\bin31\fromelf.exe"</FROMELF>
-
-    <CC      Condition="'$(COMPILER_TOOL_VERSION)'=='MDK3.80a'">"$(MDK_TOOL_PATH)\bin40\armcc.exe"</CC>
-    <CPP     Condition="'$(COMPILER_TOOL_VERSION)'=='MDK3.80a'">"$(MDK_TOOL_PATH)\bin40\armcc.exe"</CPP>
-    <AS      Condition="'$(COMPILER_TOOL_VERSION)'=='MDK3.80a'">"$(MDK_TOOL_PATH)\bin40\armasm.exe"</AS>
-    <LINK    Condition="'$(COMPILER_TOOL_VERSION)'=='MDK3.80a'">"$(MDK_TOOL_PATH)\bin40\armlink.exe"</LINK>
-    <AR      Condition="'$(COMPILER_TOOL_VERSION)'=='MDK3.80a'">"$(MDK_TOOL_PATH)\bin40\armar.exe"</AR>
-    <FROMELF Condition="'$(COMPILER_TOOL_VERSION)'=='MDK3.80a'">"$(MDK_TOOL_PATH)\bin40\fromelf.exe"</FROMELF>
-
-    <CC      Condition="'$(COMPILER_TOOL_VERSION)'=='MDK4.12'">"$(MDK_TOOL_PATH)\bin40\armcc.exe"</CC>
-    <CPP     Condition="'$(COMPILER_TOOL_VERSION)'=='MDK4.12'">"$(MDK_TOOL_PATH)\bin40\armcc.exe"</CPP>
-    <AS      Condition="'$(COMPILER_TOOL_VERSION)'=='MDK4.12'">"$(MDK_TOOL_PATH)\bin40\armasm.exe"</AS>
-    <LINK    Condition="'$(COMPILER_TOOL_VERSION)'=='MDK4.12'">"$(MDK_TOOL_PATH)\bin40\armlink.exe"</LINK>
-    <AR      Condition="'$(COMPILER_TOOL_VERSION)'=='MDK4.12'">"$(MDK_TOOL_PATH)\bin40\armar.exe"</AR>
-    <FROMELF Condition="'$(COMPILER_TOOL_VERSION)'=='MDK4.12'">"$(MDK_TOOL_PATH)\bin40\fromelf.exe"</FROMELF>
-
-    <CC      Condition="'$(COMPILER_TOOL_VERSION)'=='MDK4.13'">"$(MDK_TOOL_PATH)\bin40\armcc.exe"</CC>
-    <CPP     Condition="'$(COMPILER_TOOL_VERSION)'=='MDK4.13'">"$(MDK_TOOL_PATH)\bin40\armcc.exe"</CPP>
-    <AS      Condition="'$(COMPILER_TOOL_VERSION)'=='MDK4.13'">"$(MDK_TOOL_PATH)\bin40\armasm.exe"</AS>
-    <LINK    Condition="'$(COMPILER_TOOL_VERSION)'=='MDK4.13'">"$(MDK_TOOL_PATH)\bin40\armlink.exe"</LINK>
-    <AR      Condition="'$(COMPILER_TOOL_VERSION)'=='MDK4.13'">"$(MDK_TOOL_PATH)\bin40\armar.exe"</AR>
-    <FROMELF Condition="'$(COMPILER_TOOL_VERSION)'=='MDK4.13'">"$(MDK_TOOL_PATH)\bin40\fromelf.exe"</FROMELF>
-
-    <CC      Condition="'$(COMPILER_TOOL_VERSION)'=='MDK4.54'">"$(MDK_TOOL_PATH)\bin40\armcc.exe"</CC>
-    <CPP     Condition="'$(COMPILER_TOOL_VERSION)'=='MDK4.54'">"$(MDK_TOOL_PATH)\bin40\armcc.exe"</CPP>
-    <AS      Condition="'$(COMPILER_TOOL_VERSION)'=='MDK4.54'">"$(MDK_TOOL_PATH)\bin40\armasm.exe"</AS>
-    <LINK    Condition="'$(COMPILER_TOOL_VERSION)'=='MDK4.54'">"$(MDK_TOOL_PATH)\bin40\armlink.exe"</LINK>
-    <AR      Condition="'$(COMPILER_TOOL_VERSION)'=='MDK4.54'">"$(MDK_TOOL_PATH)\bin40\armar.exe"</AR>
-    <FROMELF Condition="'$(COMPILER_TOOL_VERSION)'=='MDK4.54'">"$(MDK_TOOL_PATH)\bin40\fromelf.exe"</FROMELF>
   </PropertyGroup>
+
+  <Choose>
+    <When Condition="$(COMPILER_TOOL_VER)&lt;350"><!-- <3.50 -->
+      <PropertyGroup>
+        <CC     >"$(MDK_TOOL_PATH)\bin31\armcc.exe"</CC>
+        <CPP    >"$(MDK_TOOL_PATH)\bin31\armcc.exe"</CPP>
+        <AS     >"$(MDK_TOOL_PATH)\bin31\armasm.exe"</AS>
+        <LINK   >"$(MDK_TOOL_PATH)\bin31\armlink.exe"</LINK>
+        <AR     >"$(MDK_TOOL_PATH)\bin31\armar.exe"</AR>
+        <FROMELF>"$(MDK_TOOL_PATH)\bin31\fromelf.exe"</FROMELF>
+        <MDK_INC>"$(MDK_TOOL_PATH)\RV31\INC"</MDK_INC>
+        <MDK_LIB>"$(MDK_TOOL_PATH)\RV31\LIB"</MDK_LIB>
+      </PropertyGroup>
+    </When>
+    <When Condition="$(COMPILER_TOOL_VER)&lt;460"><!-- <4.60 (3.80 - 4.54) -->
+      <PropertyGroup>
+        <CC     >"$(MDK_TOOL_PATH)\bin40\armcc.exe"</CC>
+        <CPP    >"$(MDK_TOOL_PATH)\bin40\armcc.exe"</CPP>
+        <AS     >"$(MDK_TOOL_PATH)\bin40\armasm.exe"</AS>
+        <LINK   >"$(MDK_TOOL_PATH)\bin40\armlink.exe"</LINK>
+        <AR     >"$(MDK_TOOL_PATH)\bin40\armar.exe"</AR>
+        <FROMELF>"$(MDK_TOOL_PATH)\bin40\fromelf.exe"</FROMELF>
+        <MDK_INC>"$(MDK_TOOL_PATH)\RV31\INC"</MDK_INC>
+        <MDK_LIB>"$(MDK_TOOL_PATH)\RV31\LIB"</MDK_LIB>
+      </PropertyGroup>
+    </When>
+    <Otherwise><!-- 4.60 and above -->
+      <PropertyGroup>
+        <CC     >"$(MDK_TOOL_PATH)\ARMCC\bin\armcc.exe"</CC>
+        <CPP    >"$(MDK_TOOL_PATH)\ARMCC\bin\armcc.exe"</CPP>
+        <AS     >"$(MDK_TOOL_PATH)\ARMCC\bin\armasm.exe"</AS>
+        <LINK   >"$(MDK_TOOL_PATH)\ARMCC\bin\armlink.exe"</LINK>
+        <AR     >"$(MDK_TOOL_PATH)\ARMCC\bin\armar.exe"</AR>
+        <FROMELF>"$(MDK_TOOL_PATH)\ARMCC\bin\fromelf.exe"</FROMELF>
+        <MDK_INC>"$(MDK_TOOL_PATH)\ARMCC\include"</MDK_INC>
+        <MDK_LIB>"$(MDK_TOOL_PATH)\ARMCC\lib"</MDK_LIB>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
 
   <PropertyGroup>
     <POS_DEPENDENT  ></POS_DEPENDENT>
@@ -54,8 +73,6 @@
     <AS_CC_CPP_COMMON_FLAGS Condition = "'$(INSTRUCTION_SET)'=='arm'"                                    >$(AS_CC_CPP_COMMON_FLAGS) $(SWTC)arm</AS_CC_CPP_COMMON_FLAGS>
     <AS_CC_CPP_COMMON_FLAGS Condition = "'$(INSTRUCTION_SET)'=='thumb' or '$(INSTRUCTION_SET)'=='thumb2'">$(AS_CC_CPP_COMMON_FLAGS) $(SWTC)thumb</AS_CC_CPP_COMMON_FLAGS>
     <AS_CC_CPP_COMMON_FLAGS Condition = "'$(INSTRUCTION_SET)'=='thumb' or '$(INSTRUCTION_SET)'=='thumb2'">$(AS_CC_CPP_COMMON_FLAGS) $(SWTC)apcs=interwork </AS_CC_CPP_COMMON_FLAGS>
-
-    <CC_CPP_COMMON_FLAGS>$(CC_CPP_COMMON_FLAGS) -DMDK_V3_1</CC_CPP_COMMON_FLAGS>
 
     <CC_CPP_COMMON_FLAGS>$(CC_CPP_COMMON_FLAGS) -DARM_V3_1</CC_CPP_COMMON_FLAGS>
 <!-- TODO: FIND OUT WHY THESE ARE NEEDED -->
@@ -68,13 +85,7 @@
     <CC_CPP_COMMON_FLAGS Condition="'$(reducesize)'!='true'">$(CC_CPP_COMMON_FLAGS) $(SWTC)feedback $(SPO_SDK)\tools\make\Feedback\$(TARGETPLATFORM)_$(COMPILER_TOOL_VERSION).feedback</CC_CPP_COMMON_FLAGS>
     <CC_CPP_COMMON_FLAGS Condition="'$(reducesize)'=='true'">$(CC_CPP_COMMON_FLAGS) $(SWTC)feedback $(SPO_SDK)\tools\make\Feedback\$(TARGETPLATFORM)_$(COMPILER_TOOL_VERSION)_loader.feedback</CC_CPP_COMMON_FLAGS>
 
-    <CC_CPP_ASM_INTERLEAVE Condition="'$(COMPILER_TOOL_VERSION)'=='MDK3.1'"  > $(SWTC)asm $(SWTC)interleave </CC_CPP_ASM_INTERLEAVE>
-    <CC_CPP_ASM_INTERLEAVE Condition="'$(COMPILER_TOOL_VERSION)'=='MDK3.80a'"> $(SWTC)asm $(SWTC)interleave </CC_CPP_ASM_INTERLEAVE>
-    <CC_CPP_ASM_INTERLEAVE Condition="'$(COMPILER_TOOL_VERSION)'=='MDK4.12'" > $(SWTC)asm $(SWTC)interleave </CC_CPP_ASM_INTERLEAVE>
-    <CC_CPP_ASM_INTERLEAVE Condition="'$(COMPILER_TOOL_VERSION)'=='MDK4.13'" > $(SWTC)asm $(SWTC)interleave </CC_CPP_ASM_INTERLEAVE>
-    <CC_CPP_ASM_INTERLEAVE Condition="'$(COMPILER_TOOL_VERSION)'=='MDK4.22'" > $(SWTC)asm $(SWTC)interleave </CC_CPP_ASM_INTERLEAVE>
-    <CC_CPP_ASM_INTERLEAVE Condition="'$(COMPILER_TOOL_VERSION)'=='MDK4.23'" > $(SWTC)asm $(SWTC)interleave </CC_CPP_ASM_INTERLEAVE>
-    <CC_CPP_ASM_INTERLEAVE Condition="'$(COMPILER_TOOL_VERSION)'=='MDK4.54'" >                              </CC_CPP_ASM_INTERLEAVE>
+    <CC_CPP_ASM_INTERLEAVE Condition="$(COMPILER_TOOL_VER)&lt;454">$(SWTC)asm $(SWTC)interleave</CC_CPP_ASM_INTERLEAVE>
 
     <CC_CPP_TARGETTYPE_FLAGS Condition="'$(FLAVOR)'=='RTM'"         >$(CC_CPP_TARGETTYPE_FLAGS) $(SWTC)no_debug $(SWTC)dwarf2 $(SWTC)no_debug_macros -O3 $(SWTC)inline -Otime $(SWTC)no_autoinline $(CC_CPP_ASM_INTERLEAVE) </CC_CPP_TARGETTYPE_FLAGS>
     <CC_CPP_TARGETTYPE_FLAGS Condition="'$(FLAVOR)'=='Debug'"       >$(CC_CPP_TARGETTYPE_FLAGS) $(SWTC)debug    $(SWTC)dwarf2 $(SWTC)debug_macros    -O0 $(SWTC)inline                             $(CC_CPP_ASM_INTERLEAVE) </CC_CPP_TARGETTYPE_FLAGS>
@@ -183,7 +194,7 @@
 
     <CC_CPP_COMMON_FLAGS>$(CC_CPP_COMMON_FLAGS) @(CC_CPP_Defines->'-D%(filename)',' ')</CC_CPP_COMMON_FLAGS>
 
-    <CC_CPP_INCS>$(CC_CPP_INCS) -I$(RVCT31INC)</CC_CPP_INCS>
+    <CC_CPP_INCS>$(CC_CPP_INCS) -I$(MDK_INC)</CC_CPP_INCS>
     <CC_CPP_INCS>$(CC_CPP_INCS) -I$(CLRROOT)\$(Directory)</CC_CPP_INCS>
     <CC_CPP_INCS>$(CC_CPP_INCS) -I$(SPO_SDK)\DeviceCode\include</CC_CPP_INCS>
     <CC_CPP_INCS>$(CC_CPP_INCS) -I$(SPO_SDK)\DeviceCode\Cores\arm</CC_CPP_INCS>
@@ -220,7 +231,7 @@
     <LINK_TARGETTYPE_FLAGS>$(LINK_TARGETTYPE_FLAGS) $(SWTC)debug</LINK_TARGETTYPE_FLAGS>
     <LINK_FLAGS>$(LINK_FLAGS) $(LINK_TARGETTYPE_FLAGS) $(SWTC)remove $(SWTC)unmangled $(SWTC)info sizes,totals,veneers,unused,libraries $(SWTC)map  $(SWTC)xref $(SWTC)symbols $(SWTC)callgraph</LINK_FLAGS>
 
-    <LINK_FLAGS>$(LINK_FLAGS) $(SWTC)userlibpath $(LIB_DIR) $(SWTC)userlibpath $(PLATFORM_INDEPENDENT_LIB_DIR) $(SWTC)libpath $(MDK_TOOL_PATH)\RV31\LIB $(ExtraLinkFlags)</LINK_FLAGS>
+    <LINK_FLAGS>$(LINK_FLAGS) $(SWTC)userlibpath $(LIB_DIR) $(SWTC)userlibpath $(PLATFORM_INDEPENDENT_LIB_DIR) $(SWTC)libpath $(MDK_LIB) $(ExtraLinkFlags)</LINK_FLAGS>
 
     <LINK_FLAGS Condition="'$(OutputType)'=='Executable' and '$(LINK_ENTRY_SET)'!='true'">$(LINK_FLAGS) $(SWTC)entry EntryPoint $(ExtraLinkFlags)</LINK_FLAGS>
 
